@@ -25,9 +25,13 @@ import argparse
 import pathlib
 
 
+
 def get_students(students_file = 'students', exclude = []):
     # defaults to a file in the same directory called students
-    students_file = pathlib.Path(students_file)
+    here = pathlib.Path(__file__).resolve().parent
+    print(here)
+    students_file = pathlib.PurePath(here).joinpath(students_file)
+    print(students_file)
     # old way of doing things
     # os.path.join(os.getcwd(), students_file)
 
@@ -90,6 +94,8 @@ def get_student_groups(students, group_size = 2, verbose=False):
 
 
 def get_random_students(students,n = 1):
+    if n > len(students):
+        n = len(students)
     return [random.sample(students, n)]
 
 
