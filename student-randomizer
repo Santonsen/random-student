@@ -24,17 +24,8 @@ import random
 import argparse
 import pathlib
 
-
-
-def get_students(students_file = 'students', exclude = []):
-    # defaults to a file in the same directory called students
-    here = pathlib.Path(__file__).resolve().parent
-    print(here)
-    students_file = pathlib.PurePath(here).joinpath(students_file)
-    print(students_file)
-    # old way of doing things
-    # os.path.join(os.getcwd(), students_file)
-
+def get_students(students_file, exclude = []):
+    
     with open (students_file, 'r') as f:
         students = f.read()
 
@@ -110,7 +101,11 @@ def main():
                         help='Will return random students. Uses -n flag for amount. Defaults to 1.')
     parser.add_argument('-n', type=int, default=1, help='The amojnt of students to return.' +
                         'Determines group size if -g flag is set.')
-    parser.add_argument('--list_students','-l', type=pathlib.Path, default='./students',
+
+    here = pathlib.Path(__file__).resolve().parent
+    # defaults to a file in the same directory called students
+    default_students_file = pathlib.PurePath(here).joinpath('students')
+    parser.add_argument('--list_students','-l', type=pathlib.Path, default=default_students_file,
                         help='Defines the list containing the students.' +
                         'Defaults to a file called "students" in the cwd.')
     parser.add_argument('--exclude','-e', nargs='*', type=str, default='',
