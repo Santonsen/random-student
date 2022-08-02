@@ -1,0 +1,143 @@
+#!/usr/bin/env python
+
+# Copyright 2022 Santonsen
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of 
+# this software and associated documentation files (the "Software"), to deal in 
+# the Software without restriction, including without limitation the rights to 
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+# of the Software, and to permit persons to whom the Software is furnished to do 
+# so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all 
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+# SOFTWARE.
+
+import random
+import argparse
+import pathlib
+
+
+def get_students(students_file = 'students', exclude = []):
+    # defaults to a file in the same directory called students
+    students_file = pathlib.Path(students_file)
+    # old way of doing things
+    # os.path.join(os.getcwd(), students_file)
+
+    with open (students_file, 'r') as f:
+        students = f.read()
+
+    students = students.splitlines()
+    # make sure all input is lowercase
+    students = [x.lower() for x in students]
+    exclude = [x.lower() for x in exclude]
+
+    for i, student in enumerate(exclude):
+        if exclude[i] in students:
+            students.remove(exclude[i])
+        else:
+            print('\n[!] Cannot exclude "{0}". Not found in the list of students'.format(exclude[i]))
+
+    # Capitalize every name again
+    students = [x.title() for x in students]
+
+    return students
+
+
+def get_student_groups(students, group_size = 2, verbose=False):
+    if group_size > len(students):
+        if verbose:
+            print('\n[!] Group size set higher than amount of students.\n[!] Placing everyone in same group')
+        return [students]
+    # create groups of students
+    student_groups = []
+    while len(students) != 0:
+        # exception if the remanding students are fewer than group size
+        if len(students) < group_size:
+            # report to user that the program is trying to place the remainding students
+            if verbose:
+                print('\n[!] Placing remainding students into groups')
+            # add the remainding student(s) to groups
+            for i,student in enumerate(students):
+                # sometimes there will be more students left over than there are groups
+                # get the group with the fewest members
+                # sort the groups by length, shortest first
+                sorted_groups = sorted(student_groups, key=len)
+                if verbose:
+                    print('placing {0} into {1}'.format(student, sorted_groups[0]))
+                sorted_groups[0].append(student)
+            # all students placed.
+            # clearing students variable
+            students = []
+
+        # get a random group
+        if len(students) >= group_size:
+            student_group = random.sample(students,group_size)
+            # add it to the list of groups
+            student_groups.append(student_group)
+
+            # remove the selected students from students    
+            [students.remove(x) for x in student_group]
+
+    return student_groups
+
+
+def get_random_students(students,n = 1):
+    return [random.sample(students, n)]
+
+
+def main():
+
+    parser = argparse.ArgumentParser(description='Pick random student(s) or ' +
+                                     'place random students into groups.')
+    parser.add_argument('--group','-g', action='store_true',
+                        help='Randomly splits students into groups.' +
+                        'Uses the -n flag for size. Defaults to 2.')
+    parser.add_argument('-students','-s', type=int, default=1,
+                        help='Will return random students. Uses -n flag for amount. Defaults to 1.')
+    parser.add_argument('-n', type=int, default=1, help='The amojnt of students to return.' +
+                        'Determines group size if -g flag is set.')
+    parser.add_argument('--list_students','-l', type=pathlib.Path, default='./students',
+                        help='Defines the list containing the students.' +
+                        'Defaults to a file called "students" in the cwd.')
+    parser.add_argument('--exclude','-e', nargs='*', type=str, default='',
+                        help='Allows exclusion of one or more students from the students list.' +
+                        'This input is case insesitive.')
+    parser.add_argument('--verbose','-v', action='store_true')
+
+    args = parser.parse_args()
+
+    students = get_students(students_file=args.list_students,exclude=args.exclude)
+
+    if args.group:
+        # if group flag set n should default to 2
+        # if any other value is given, use that value instead
+        if args.n == 1:
+            args.n = 2
+
+        output = get_student_groups(students, args.n, args.verbose)
+        
+    if not args.group:
+
+        output = get_random_students(students, args.n)
+
+    # prettify output
+    output = [', '.join(x) for x in output]
+
+
+
+    line = '\n\n' + '##' + '-'*76 + '##' + '\n\n'
+    print(line)
+    print(*output, sep='\n')
+    print(line)
+
+        
+main()
+
